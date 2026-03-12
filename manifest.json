@@ -1,0 +1,19 @@
+{
+  "required_api_version": "2",
+  "name": "Shell Run",
+  "description": "Run a shell command and see output in Ulauncher",
+  "developer_name": "dnewcome",
+  "icon": "images/icon.png",
+  "options": {
+    "query_debounce": 0.1
+  },
+  "preferences": [
+    {
+      "id": "sh_kw",
+      "type": "keyword",
+      "name": "Shell Run keyword",
+      "description": "Keyword to trigger shell command runner",
+      "default_value": "sh"
+    }
+  ]
+}
