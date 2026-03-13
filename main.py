@@ -8,7 +8,14 @@ import html
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
-from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
+try:
+    from ulauncher.internals.result import Result
+    ResultItem = Result
+    HAS_MULTILINE = True
+except ImportError:
+    from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
+    ResultItem = ExtensionResultItem
+    HAS_MULTILINE = False
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
@@ -47,7 +54,7 @@ class KeywordQueryEventListener(EventListener):
 
         if not query:
             return RenderResultListAction([
-                ExtensionResultItem(
+                ResultItem(
                     icon='images/icon.png',
                     name='sh',
                     description='Type a command and press Enter',
@@ -56,7 +63,7 @@ class KeywordQueryEventListener(EventListener):
             ])
 
         return RenderResultListAction([
-            ExtensionResultItem(
+            ResultItem(
                 icon='images/icon.png',
                 name=query,
                 description='Press Enter to run',
@@ -86,7 +93,7 @@ class ItemEnterEventListener(EventListener):
         except Exception as e:
             logger.exception('Failed to run command')
             return RenderResultListAction([
-                ExtensionResultItem(
+                ResultItem(
                     icon='images/icon.png',
                     name=clean(f'Error: {e}'),
                     on_enter=DoNothingAction(),
@@ -101,7 +108,7 @@ class ItemEnterEventListener(EventListener):
         items = []
 
         if returncode != 0:
-            items.append(ExtensionResultItem(
+            items.append(ResultItem(
                 icon='images/icon.png',
                 name=f'[exit {returncode}]',
                 description='Command exited with non-zero status',
@@ -109,23 +116,29 @@ class ItemEnterEventListener(EventListener):
             ))
 
         if not lines:
-            items.append(ExtensionResultItem(
+            items.append(ResultItem(
                 icon='images/icon.png',
                 name='(no output)',
                 on_enter=DoNothingAction(),
             ))
         else:
-            name = clean(lines[0])
-            if len(lines) > 1:
-                description = clean('  '.join(lines[1:]))
+            if HAS_MULTILINE:
+                items.append(ResultItem(
+                    icon='images/icon.png',
+                    name=f'$ {cmd}',
+                    description='\n'.join(clean(l) for l in lines),
+                    multiline=True,
+                    on_enter=CopyToClipboardAction('\n'.join(lines)),
+                ))
             else:
-                description = 'Click to copy'
-            items.append(ExtensionResultItem(
-                icon='images/icon.png',
-                name=name,
-                description=description,
-                on_enter=CopyToClipboardAction('\n'.join(lines)),
-            ))
+                name = clean(lines[0])
+                description = clean('  '.join(lines[1:])) if len(lines) > 1 else 'Click to copy'
+                items.append(ResultItem(
+                    icon='images/icon.png',
+                    name=name,
+                    description=description,
+                    on_enter=CopyToClipboardAction('\n'.join(lines)),
+                ))
 
         return RenderResultListAction(items)
 

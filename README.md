@@ -38,6 +38,26 @@ ln -s /path/to/ulauncher-term \
     ~/.local/share/ulauncher/extensions/ulauncher-term
 ```
 
+## Multiline output (patched Ulauncher v6)
+
+The standard Ulauncher result item shows output as a single-line title with remaining lines collapsed into the subtitle. A patched build of Ulauncher v6 adds a `multiline` flag that renders newlines in the description natively, preserving the full output structure.
+
+When using the patched build, results are constructed like this:
+
+```python
+from ulauncher.internals.result import Result
+
+Result(
+    name="$ your-command",
+    description="line one\nline two\nline three",
+    multiline=True,
+    icon="images/icon.png",
+    on_enter=...,
+)
+```
+
+This flag has no effect on stock Ulauncher — it is silently ignored — so the plugin remains compatible with unpatched installs.
+
 ## Notes
 
 - `stderr` is merged with `stdout`, so error messages from failed commands are visible in the output.
